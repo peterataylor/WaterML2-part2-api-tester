@@ -24,8 +24,12 @@ Optional flags:
 
 ## Examples
 
-```python rgs-api-test.py http://waterml2.csiro.au/rgs-api/v1/ 419009 -a rgs/test
-python rgs-api-test.py http://staging.waterdata.usgs.gov/nwisweb/cgi-src 06025500
-python rgs-api-test.py http://203.12.195.133/cgi/waterml2 225201A```
+```
+python rgs-api-test.py http://waterml2.csiro.au/rgs-api/v1/ 419009 -a rgs/test
 
+python rgs-api-test.py http://staging.waterdata.usgs.gov/nwisweb/cgi-src 06025500
+
+python rgs-api-test.py http://203.12.195.133/cgi/waterml2 225201A
+
+```
 
