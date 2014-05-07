@@ -1,12 +1,12 @@
 # Overview
 
-This script tests prototype RESTful APIs for the WaterML2.0 part 2 Interoperability Experiment (http://external.opengis.org/twiki_public/HydrologyDWG/WaterML2Part2). WaterML2.0 part 2 is an format for exchanging hydrological rating tables and gaugings (observations). See http://opengeospatial.org/standards/waterml for info on WaterML2.0. 
+This script tests prototype RESTful APIs for the WaterML2.0 part 2 Interoperability Experiment (http://external.opengis.org/twiki_public/HydrologyDWG/WaterML2Part2). WaterML2.0 part 2 is a format for exchanging hydrological rating tables and gaugings (observations). See http://opengeospatial.org/standards/waterml for info on WaterML2.0. 
 
 The script issues HTTP requests and attempts to parse JSON responses. The structure checking on the JSON is very basic; it checks for existence of some key required fields. This will be extended to make use of JSON schema. 
 
 # Installation and Requirements
 
-See requirements.txt for required python libraries. These can be loaded using [Python pip](https://pypi.python.org/pypi/pip):
+See [requirements.txt](https://github.com/peterataylor/WaterML2-part2-api-tester/blob/master/requirements.txt) for required python libraries. These can be loaded using [Python pip](https://pypi.python.org/pypi/pip):
 
 ``` pip install -r requirements.txt ```
 

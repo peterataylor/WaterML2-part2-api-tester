@@ -242,6 +242,8 @@ if __name__ == '__main__':
     print "Running conversion group test..."
     tester.test_conversion_group()
 
+    # Was previously using unit test framework but didn't match the HTTP client
+    # - better for lower level unit tests
     #suite = unittest.TestLoader().loadTestsFromTestCase(BasicAvailabilityTest)
     #unittest.TextTestRunner(verbosity=1).run(suite)
 
