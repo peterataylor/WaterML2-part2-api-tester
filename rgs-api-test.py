@@ -226,7 +226,7 @@ class RGSAPITester():
             # if passed, go on to do further content-based checking 
             if passed:
                 print 'Checking nested conversion period object structure...'
-                passed, valid_period = self.validate_object('CONV_PERIOD', \
+                passed, valid_period = self.validate_object('CONV_PERIOD', 
                                 valid_conv_group['conversionPeriods'][0], True)
         else:
             print 'Failed on conversion group retrieval (%s)' % (r.reason)

@@ -6,6 +6,8 @@ The script issues HTTP requests and attempts to parse JSON responses. The struct
 
 # Installation and Requirements
 
+The script has only been tested for Python 2.7, so best to use that to begin with. 
+
 See [requirements.txt](https://github.com/peterataylor/WaterML2-part2-api-tester/blob/master/requirements.txt) for required python libraries. These can be loaded using [Python pip](https://pypi.python.org/pypi/pip):
 
 ``` pip install -r requirements.txt ```
