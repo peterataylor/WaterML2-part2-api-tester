@@ -85,7 +85,6 @@ class RGSAPITester():
         self.MP_ID = args.MP_ID
         self.no_header = args.no_header
         self.verbose = args.verbose
-        print args
 
         # Definitions of base REST resources for URL endpoints
         self.CONVERSION = '/conversion'

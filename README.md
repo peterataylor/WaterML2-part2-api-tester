@@ -33,3 +33,29 @@ python rgs-api-test.py http://203.12.195.133/cgi/waterml2 225201A
 
 ```
 
+## Example output
+
+```
+>>> python rgs-api-test.py http://staging.waterdata.usgs.gov/nwisweb/cgi-src 06025500
+USGS URL, fixing gauging spelling
+Running monitoring point test...
+Testing retrieval of monitoring point (06025500 at http://staging.waterdata.usgs.gov/nwisweb/cgi-src)
+WARNING: the response type has not been set to JSON(received text/html; charset=iso-8859-1)
+Received 404 response from http://staging.waterdata.usgs.gov/nwisweb/cgi-src/monitoring-point?monitoring-point=06025500&monitoringPoint=06025500&format=json (text/html; charset=iso-8859-1)
+Failed on MP retrieval
+Running gauging test...
+Testing gaugings end point at http://staging.waterdata.usgs.gov/nwisweb/cgi-src/guaging for MP:06025500
+WARNING: the response type has not been set to JSON(received text/plain; charset=utf-8)
+Received 200 response from http://staging.waterdata.usgs.gov/nwisweb/cgi-src/guaging?monitoring-point=06025500&monitoringPoint=06025500&format=json (text/plain; charset=utf-8)
+Received gaugings, checking structure...
+JSON object does not contain required featureOfInterest field!
+1 error(s) found in GAUGING objects
+Running conversion group test...
+Testing conversion group end point at http://staging.waterdata.usgs.gov/nwisweb/cgi-src/guaging for MP:06025500
+WARNING: the response type has not been set to JSON(received text/plain; charset=utf-8)
+Received 200 response from http://staging.waterdata.usgs.gov/nwisweb/cgi-src/conversion-group?monitoring-point=06025500&monitoringPoint=06025500&format=json (text/plain; charset=utf-8)
+Received conversion group, checking structure...
+Successfully passed CONV_GROUP test!
+Checking nested conversion period object structure...
+Successfully passed CONV_PERIOD test!
+```
