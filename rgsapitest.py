@@ -73,15 +73,15 @@ class HTTPRequester():
     def check_url_exists(self, url):
         #r = requests.get(url, 
         #        auth=self.auth)
-        r = requests.get(url)
+        params = {'format': 'json'}
+        r = requests.get(url, params=params)
         if not r.ok:
             message = 'WARNING: URL not resolvable (%s)' % (url)
             return False, message
         try:
             r.json()
         except:
-            message = 'WARNING: Could not retrieve JSON content from'
-            'URL (%s)' % (url)
+            message = 'WARNING: Could not retrieve JSON content from URL (%s)' % (url)
             return False, message
 
         return True, ""
@@ -101,23 +101,29 @@ class RGSAPITester():
         self.CONVERSION = '/conversion'
         self.CONVERSION_GROUP = '/conversion-group'
 
+        self.MESSAGE_INFO = 0
+        self.MESSAGE_WARN = 1 
+        self.MESSAGE_ERROR = 2 
+        self.MESSAGE_CODE = 3 
+
         # contains results
         self.messages = []
         self.warnings = []
         self.errors = []
 
         # USGS spelling fix - will be removed
-        if self.URL.find('usgs') != -1:
-            self.messages.append('USGS URL, fixing gauging spelling')
-            self.GAUGING = '/guaging'
-        else:
-            self.GAUGING = '/gauging'
+        #if self.URL.find('usgs') != -1:
+        #    self.messages.append('USGS URL, fixing gauging spelling')
+        #    self.GAUGING = '/guaging'
+        #else:
+        self.GAUGING = '/gauging'
         self.MONITORING_POINT = '/monitoring-point'
 
         # Very basic schema to test existance of essentional properties
         # This will be replaced with a JSON schema validator
         self.MP_REQUIRED = ['id', 'name', 'shape','conversiongroup_set']
-        self.CONV_REQUIRED = ['id', 'name', 'shape','conversiongroup_set']
+        self.CONV_REQUIRED = ['id', 'paramFrom',
+                'paramTo','conversionperiod_set', 'monitoringPoint', 'pointss']
         self.CONV_PERIOD_REQUIRED = ['periodStart', 'periodEnd', 'applicableConversion']
         #self.CONV_GROUP_REQUIRED = ['id', 'monitoringPoint', 'paramFrom','paramTo', \
         self.CONV_GROUP_REQUIRED = ['id', 'monitoringPoint',  
@@ -147,7 +153,8 @@ class RGSAPITester():
         headers as this handles 'no-header' flag checks.
         '''
         
-        if self.verbose: self.messages.append(json.dumps(content, indent=2))
+        if self.verbose: self.messages.append({ "level": self.MESSAGE_CODE, "msg":
+            json.dumps(content, indent=2)})
         if self.no_header or no_header:
             json_content = content
         else:
@@ -155,12 +162,17 @@ class RGSAPITester():
                 json_content = content['results']
             elif content.has_key('result'):
                 json_content = content['result']
+                self.messages.append({"level": self.MESSAGE_ERROR,
+                    "msg":"Result property should be named results (plural). "
+                    "Forgiving this error..."})
             else:
-                self.messages.append("No results could be found in header!")
+                self.messages.append({ "level": self.MESSAGE_ERROR, "msg":"No \
+                    results could be found in header!"})
                 return False, ""
 
             if len(json_content) == 0:
-                self.messages.append("No results returned!")
+                self.messages.append({ "level": self.MESSAGE_ERROR, "msg":"No \
+                    results returned!"})
             else: # just check first object returned
                 json_content = json_content[0]
 
@@ -168,21 +180,23 @@ class RGSAPITester():
         errors = 0
         for field in required_fields:
             if not json_content.has_key(field):
-                self.messages.append('JSON object does not contain required %s field!' % 
-                        (field))
+                self.messages.append({ "level": self.MESSAGE_ERROR, 
+                    "msg":'JSON object does not contain required %s field!' %  (field)})
                 errors += 1
         if not errors:
-            self.messages.append("Successfully passed %s test!" % (test_name))
+            self.messages.append({ "level": self.MESSAGE_INFO,
+                "msg":"Successfully passed %s test!" % (test_name)})
             return True, json_content
         else:
-            self.messages.append("%d error(s) found in %s objects" % (errors,
-                test_name))
+            self.messages.append({ "level": self.MESSAGE_ERROR, 
+                "msg":"%d error(s) found in %s objects" % (errors, test_name)})
             return False, json_content
 
     def test_monitoring_point(self):
         self.messages = []
-        self.messages.append('Testing retrieval of monitoring point (%s at %s)' %
-            (self.MP_ID, self.URL))
+        self.messages.append({ "level": self.MESSAGE_INFO, 
+            "msg":'Testing retrieval of monitoring point (%s at %s)' %
+            (self.MP_ID, self.URL)})
         
         url = self.URL + self.MONITORING_POINT 
         params = dict()
@@ -193,28 +207,49 @@ class RGSAPITester():
         r = self.requester.send_request(url, params)
 
         response_type = r.headers['content-type']
-        self.messages.append('Received %d response from %s (%s)' % (r.status_code, r.url,
-                response_type))
+        self.messages.append({ "level": self.MESSAGE_INFO,
+                "msg":'Received %d response from %s (%s)' % (r.status_code, r.url,
+                response_type)})
         if r.ok:
-            self.messages.append('Received monitoring point encoding, checking' 
-                ' structure...')
-            result = r.json()
+            self.messages.append({ "level": self.MESSAGE_INFO, 
+                "msg":'Received monitoring point encoding, checking structure...'})
+            try:
+                result = r.json()
+            except:
+                self.messages.append({"level":self.MESSAGE_ERROR,
+                    "msg":"No valid JSON response from %s" % r.url})
+                return self.messages
             success, mp = self.validate_object('MP',result)
             if success:
-                self.messages.append('Checking conversion group link...')
                 groups = mp['conversiongroup_set']
-                if self.verbose: self.messages.append(json.dumps(result, indent=2))
+                self.messages.append({ "level": self.MESSAGE_INFO,
+                    "msg":'Checking conversion group link (%s)' % str(groups)})
+                #if self.verbose: self.messages.append({ "level":
+                #    self.MESSAGE_CODE, "msg":json.dumps(result, indent=2)})
                 if len(groups) > 0:
-                    self.requester.check_url_exists(groups[0])
+                    passes, message = self.requester.check_url_exists(groups[0])
+                    if not passes:
+                        self.messages.append({"level":self.MESSAGE_ERROR,
+                            "msg":"Conversion group link from MP not "
+                            "resolvable (%s)" % message})
+                    else:
+                        self.messages.append({"level":self.MESSAGE_INFO,
+                            "msg":"Conversion group link OK"})
+                else:
+                    self.messages.append({"level":self.MESSAGE_ERROR,
+                        "msg":"No conversion group link from MP"})
         else:
-            self.messages.append('Failed on MP retrieval')
+            self.messages.append({ "level": self.MESSAGE_ERROR, 
+                "msg":'Failed on MP retrieval: error returned from:'
+                ' %s' % r.url})
 
         return self.messages
 
     def test_gaugings(self):
         self.messages = []
-        self.messages.append('Testing gaugings end point at %s for MP:%s' % (self.URL +
-                    self.GAUGING, self.MP_ID))
+        self.messages.append({ "level": self.MESSAGE_INFO, 
+                "msg":'Testing gaugings end point at %s for MP:%s' % (self.URL +
+                self.GAUGING, self.MP_ID)})
 
         url = self.URL + self.GAUGING 
         params = dict()
@@ -223,21 +258,32 @@ class RGSAPITester():
         r = self.requester.send_request(url, params)
 
         response_type = r.headers['content-type']
-        self.messages.append('Received %d response from %s (%s)' % (r.status_code, r.url,
-                response_type))
+        self.messages.append({ "level": self.MESSAGE_INFO, 
+            "msg":'Received %d response from %s (%s)' % (r.status_code, r.url,
+                response_type)})
         if r.ok:
-            self.messages.append('Received gaugings, checking structure...')
-            result = r.json()
+            self.messages.append({ "level": self.MESSAGE_INFO, "msg":'Received'
+                ' gaugings, checking structure...'})
+
+            try:
+                result = r.json()
+            except:
+                self.messages.append({ "level": self.MESSAGE_ERROR,
+                    "msg":'Error parsing JSON response from request:' + r.url})
+                return self.messages
+
             self.validate_object('GAUGING',result)
         else:
-            self.messages.append('Failed on gauging retrieval (%s)' % (r.reason))
+            self.messages.append({ "level": self.MESSAGE_ERROR, "msg":'Failed ' 
+                'on gauging retrieval (%s)' % (r.reason)})
 
         return self.messages
         
     def test_conversion_group(self):
         self.messages=[]
-        self.messages.append('Testing conversion group end point at %s for MP:%s' % (self.URL +
-                    self.GAUGING, self.MP_ID))
+        self.messages.append({ "level": self.MESSAGE_INFO, 
+            "msg":'Testing conversion group end point at %s for MP:%s' % (self.URL +
+            self.GAUGING, self.MP_ID)})
 
         url = self.URL + self.CONVERSION_GROUP 
         params = dict()
@@ -246,28 +292,52 @@ class RGSAPITester():
         r = self.requester.send_request(url, params)
 
         response_type = r.headers['content-type']
-        self.messages.append('Received %d response from %s (%s)' % (r.status_code, r.url,
-                response_type))
+        self.messages.append({ "level": self.MESSAGE_INFO, 
+                "msg":'Received %d response from %s (%s)' % (r.status_code, r.url,
+                response_type)})
         if r.ok:
-            self.messages.append('Received conversion group, checking '
-                    'structure...')
+            self.messages.append({ "level": self.MESSAGE_INFO, 
+                    "msg":'Received conversion group, checking '
+                    'structure...'})
             try: 
                 result = r.json()
             except:
-                self.messages.append('Error retrieving JSON from call %s' %
-                        r.url)
-                return
+                self.messages.append({ "level": self.MESSAGE_ERROR, 
+                    "msg":'Error retrieving JSON from call %s' % r.url})
+                return self.messages
             
             passed, valid_conv_group = self.validate_object('CONV_GROUP',result)
             # if passed, go on to do further content-based checking 
             if passed:
-                self.messages.append('Checking nested conversion period object'
-                        'structure...')
-                passed, valid_period = self.validate_object('CONV_PERIOD', 
+                self.messages.append({ "level": self.MESSAGE_INFO, 
+                        "msg":'Checking nested conversion period object structure...'})
+
+                if len(valid_conv_group['conversionPeriods']) > 0:
+                    passed, valid_period = self.validate_object('CONV_PERIOD', 
                                 valid_conv_group['conversionPeriods'][0], True)
+                    if passed:
+                        conv_url = valid_period["applicableConversion"]
+                        self.messages.append({"level":self.MESSAGE_INFO,
+                            "msg": "Valid period object. Checking "
+                            "conversion at %s" % conv_url})
+                        r = self.requester.send_request(conv_url, params)
+                        if r.ok:
+                            self.messages.append({"level":self.MESSAGE_INFO, 
+                                "msg":"Retrieved conversion."})
+                            result = r.json()
+                            passed, valid_conv = self.validate_object('CONV',
+                                    result)
+                        else:
+                            self.messages.append({"level":self.MESSAGE_ERROR, 
+                                "msg":"Error retrieving applicable conversion"})
+
+                else:
+                    self.messages.append({ "level": self.MESSAGE_WARN, 
+                        "msg":'No conversion periods listed in group'})
         else:
-            self.messages.append('Failed on conversion group retrieval (%s)' %
-                    (r.reason))
+            self.messages.append({ "level": self.MESSAGE_ERROR,
+                    "msg":'Failed on conversion group retrieval (%s)' %
+                    (r.reason)})
         return self.messages
     
     def print_results(self):
