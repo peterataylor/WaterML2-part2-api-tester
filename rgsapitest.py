@@ -123,7 +123,7 @@ class RGSAPITester():
         # This will be replaced with a JSON schema validator
         self.MP_REQUIRED = ['id', 'name', 'shape','conversiongroup_set']
         self.CONV_REQUIRED = ['id', 'paramFrom',
-                'paramTo','conversionperiod_set', 'monitoringPoint', 'pointss']
+                'paramTo','conversionperiod_set', 'monitoringPoint', 'points']
         self.CONV_PERIOD_REQUIRED = ['periodStart', 'periodEnd', 'applicableConversion']
         #self.CONV_GROUP_REQUIRED = ['id', 'monitoringPoint', 'paramFrom','paramTo', \
         self.CONV_GROUP_REQUIRED = ['id', 'monitoringPoint',  
