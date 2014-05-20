@@ -203,7 +203,7 @@ class RGSAPITester():
         # Two MP names supported for interim (APIs tend to ignore
         # unknown ones)
         params['monitoring-point'] = self.MP_ID
-        params['monitoringPoint'] = self.MP_ID
+        #params['monitoringPoint'] = self.MP_ID
         r = self.requester.send_request(url, params)
 
         response_type = r.headers['content-type']
@@ -253,7 +253,7 @@ class RGSAPITester():
 
         url = self.URL + self.GAUGING 
         params = dict()
-        params['monitoringPoint'] = self.MP_ID
+        #params['monitoringPoint'] = self.MP_ID
         params['monitoring-point'] = self.MP_ID
         r = self.requester.send_request(url, params)
 
@@ -287,7 +287,7 @@ class RGSAPITester():
 
         url = self.URL + self.CONVERSION_GROUP 
         params = dict()
-        params['monitoringPoint'] = self.MP_ID
+        #params['monitoringPoint'] = self.MP_ID
         params['monitoring-point'] = self.MP_ID
         r = self.requester.send_request(url, params)
 
